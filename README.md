@@ -1,9 +1,9 @@
 # BananaInventoryCost
 # Start
- You need to clone git rep or download it
- Open it in your compiler(VsCode/Pycharm or whatever)
- Open Terminal and install requirments.txt "pip install -r requirements.txt"
- Go to the 122 line and write your steamId:
+ - You need to clone git rep or download it
+ - Open it in your compiler(VsCode/Pycharm or whatever)
+ - Open Terminal and install requirments.txt "pip install -r requirements.txt"
+ - Go to the 122 line and write your steamId:
  ```
 def main():
     # Write your steam id.
