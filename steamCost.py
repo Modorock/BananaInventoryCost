@@ -41,7 +41,10 @@ def extract_classid_descriptions(inventory_data):
 def extract_name(inventory_data):
     descriptions = inventory_data.get("descriptions", [])
     banana_names = {item["classid"]: item["name"] for item in descriptions }
-    filtered_names = {classid: name for classid, name in banana_names.items() if name != 'Banana'}
+    # Here you can add which banana you dont want to calculate
+    # For example rewrite down code like this if you dont wnat to calculate common "Banana" id other you need to change name
+    # filtered_names = {classid: name for classid, name in banana_names.items() if name != 'Banana'}
+    filtered_names = {classid: name for classid, name in banana_names.items()}
     return filtered_names
 
 def count_classid_occurrences(classid_list):
@@ -96,9 +99,6 @@ def fetch_item_price_with_retry(market_hash_name, app_id):
     print(f"Failed to fetch price for {market_hash_name} after {retry_attempts} attempts.")
     return "Price not available"
 
-def convert_usd_to_uah(usd_price):
-    return usd_price * 40
-
 def read_previous_prices(steam_id):
     files = glob.glob(f"banana_Price_{steam_id}_*.txt")
     if not files:
@@ -146,9 +146,8 @@ def main():
                 prices[name] = "Error fetching price"
 
         count_prices_table = PrettyTable()
-        count_prices_table.field_names = ["Item Name", "Count", "Price per One (USD)", "Price per One (UAH)", "Price for All (USD)", "Price for All (UAH)", "Change"]
+        count_prices_table.field_names = ["Item Name", "Count", "Price per One (USD)", "Price for All (USD)", "Change"]
         total_usd = 0
-        total_uah = 0
         table_rows = []
         for name, price_data in prices.items():
             count = next((key for key, value in banana_names.items() if value == name), None)
@@ -162,17 +161,13 @@ def main():
             if price_data != "Price not available" and price_data != "Error fetching price":
                 try:
                     usd_price = float(price_data.split()[0].replace('$', ''))
-                    uah_price = convert_usd_to_uah(usd_price)
                     total_price_usd = usd_price * count
-                    total_price_uah = convert_usd_to_uah(total_price_usd)
                     total_usd += total_price_usd
-                    total_uah += total_price_uah
 
                     change = ""
                     previous_price = previous_prices.get(name)
 
                     usd_price_str = f"${usd_price:.2f}"
-                    uah_price_str = f"UAH {uah_price:.2f}"
 
                     if previous_price is not None:
                         try:
@@ -188,22 +183,19 @@ def main():
                             change = ""
 
                     total_price_usd_str = f"${total_price_usd:.2f}"
-                    total_price_uah_str = f"UAH {total_price_uah:.2f}"
 
                     table_rows.append([
                         f"{name}",
                         f"{str(count)}",
                         usd_price_str,
-                        uah_price_str,
                         total_price_usd_str,
-                        total_price_uah_str,
                         change
                     ])
                 except ValueError as ve:
                     print(f"Error converting price for {name}: {ve}")
 
         total_value_table = PrettyTable()
-        total_value_table.field_names = ["Total Inventory Value (USD)", "Total Inventory Value (UAH)"]
+        total_value_table.field_names = ["Total Inventory Value (USD)"]
 
         for row in table_rows:
             count_prices_table.add_row(row)
@@ -213,7 +205,7 @@ def main():
 
         total_value_table.add_row([
             f"${total_usd:.2f}",
-            f"UAH {total_uah:.2f}",])
+            ])
 
         print(count_prices_table)
         print(total_value_table)
