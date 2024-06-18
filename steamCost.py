@@ -72,7 +72,7 @@ def fetch_item_price_with_retry(market_hash_name, app_id):
             response = requests.get(url)
             response.raise_for_status()
             price_data = response.json()
-            lowest_price = price_data.get("lowest_price")
+            lowest_price = price_data.get("median_price")
 
             if not lowest_price:
                 print(f"No price available for {market_hash_name}")
@@ -99,8 +99,8 @@ def fetch_item_price_with_retry(market_hash_name, app_id):
     print(f"Failed to fetch price for {market_hash_name} after {retry_attempts} attempts.")
     return "Price not available"
 
-def read_previous_prices(steam_id):
-    files = glob.glob(f"banana_Price_{steam_id}_*.txt")
+def read_previous_prices(steam_id, folder='Banana_cost_{steam_id}'):
+    files = glob.glob(os.path.join(folder, f"banana_Price_{steam_id}_*.txt"))
     if not files:
         return {}
     
@@ -125,7 +125,12 @@ def main():
     app_id = "2923300"
     context_id = "2"
 
-    previous_prices = read_previous_prices(steam_id)
+    output_folder = f'Banana_cost_{steam_id}'
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    previous_prices = read_previous_prices(steam_id, folder=output_folder)
 
     try:
         inventory_data = fetch_inventory(steam_id, app_id, context_id)
@@ -212,10 +217,18 @@ def main():
 
         current_date = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         file_name = f"banana_Price_{steam_id}_{current_date}.txt"
+        
+        output_folder = f'Banana_cost_{steam_id}'
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
 
-        with open(file_name, 'w', encoding='utf-8') as file:
+        file_path = os.path.join(output_folder, file_name)
+
+        with open(file_path, 'w', encoding='utf-8') as file:
             file.write(str(count_prices_table) + "\n")
             file.write(str(total_value_table) + "\n")
+        
+        print(f"Output saved to {file_path}")
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
